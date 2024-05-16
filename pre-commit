@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Опція enable за допомогою git config
+ENABLED=$(git config --bool hooks.gitleaks)
+
+if [ "$ENABLED" != "true" ]; then
+    echo "Gitleaks pre-commit hook is disabled. Enable it with:"
+    echo "git config hooks.gitleaks true"
+    exit 0
+fi
+
+# Автоматична установка Gitleaks
+install_gitleaks() {
+    OS=$(uname)
+    if [ "$OS" = "Linux" ]; then
+        curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/install.sh | sh
+    elif [ "$OS" = "Darwin" ]; then
+        brew install gitleaks
+    elif [[ "$OS" =~ "CYGWIN"|"MINGW"|"MSYS" ]]; then
+        curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/install.sh | sh
+    else
+        echo "Unsupported OS: $OS"
+        exit 1
+    fi
+}
+
+
+# Перевірка чи gitleaks встановлено
+if ! command -v gitleaks &> /dev/null
+then
+    echo "Gitleaks could not be found, installing..."
+    install_gitleaks
+fi
+
+# Запуск gitleaks
+gitleaks_output=$(gitleaks detect --source . --exit-code)
+
+# Якщо знайдені секрети, відхилити коміт
+if [ $? -ne 0 ]; then
+    echo "Gitleaks found secrets in your code:"
+    echo "$gitleaks_output"
+    exit 1
+else
+    echo "No secrets found by Gitleaks. Proceeding with commit."
+fi
