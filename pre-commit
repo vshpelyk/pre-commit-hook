@@ -1,45 +1,41 @@
 #!/bin/bash
 
-# Опція enable за допомогою git config
-ENABLED=$(git config --bool hooks.gitleaks)
+# Встановлення gitleaks, якщо не встановлено
+if ! command -v gitleaks &> /dev/null
+then
+    echo "gitleaks не знайдено. Встановлення..."
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest | grep "browser_download_url.*linux_amd64.tar.gz" | cut -d : -f 2,3 | tr -d \" | wget -qi -
+        tar -xzf gitleaks*.tar.gz
+        sudo mv gitleaks /usr/local/bin/
+        rm gitleaks*.tar.gz
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest | grep "browser_download_url.*darwin_amd64.tar.gz" | cut -d : -f 2,3 | tr -d \" | wget -qi -
+        tar -xzf gitleaks*.tar.gz
+        sudo mv gitleaks /usr/local/bin/
+        rm gitleaks*.tar.gz
+    else
+        echo "Непідтримувана операційна система."
+        exit 1
+    fi
+    echo "gitleaks успішно встановлено."
+fi
 
-if [ "$ENABLED" != "true" ]; then
-    echo "Gitleaks pre-commit hook is disabled. Enable it with:"
-    echo "git config hooks.gitleaks true"
+# Перевірка чи ввімкнено pre-commit hook
+if [[ "$(git config hooks.gitleaks.enable)" != "true" ]]; then
+    echo "gitleaks pre-commit hook вимкнено. Для ввімкнення використайте: git config hooks.gitleaks.enable true"
     exit 0
 fi
 
-# Автоматична установка Gitleaks
-install_gitleaks() {
-    OS=$(uname)
-    if [ "$OS" = "Linux" ]; then
-        curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/install.sh | sh
-    elif [ "$OS" = "Darwin" ]; then
-        brew install gitleaks
-    elif [[ "$OS" =~ "CYGWIN"|"MINGW"|"MSYS" ]]; then
-        curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/install.sh | sh
-    else
-        echo "Unsupported OS: $OS"
-        exit 1
-    fi
-}
-
-
-# Перевірка чи gitleaks встановлено
-if ! command -v gitleaks &> /dev/null
-then
-    echo "Gitleaks could not be found, installing..."
-    install_gitleaks
-fi
-
 # Запуск gitleaks
-gitleaks_output=$(gitleaks detect --source . --exit-code)
+echo "Запуск gitleaks..."
+gitleaks detect --source .
 
-# Якщо знайдені секрети, відхилити коміт
-if [ $? -ne 0 ]; then
-    echo "Gitleaks found secrets in your code:"
-    echo "$gitleaks_output"
+# Перевірка результату виконання gitleaks
+if [[ $? -ne 0 ]]; then
+    echo "gitleaks виявив секрети у вашому коді. Коміт відхилено."
     exit 1
 else
-    echo "No secrets found by Gitleaks. Proceeding with commit."
+    echo "gitleaks не виявив секретів. Коміт дозволено."
+    exit 0
 fi
