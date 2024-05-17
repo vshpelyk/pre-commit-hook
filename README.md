@@ -21,10 +21,10 @@ Resolving deltas: 100% (67/67), done.
 2. Встановлюємо gitleaks та pre-commit. 
 На цьому кроці ми встановимо gitleaks (в системі повиннен бути встановлений go), та скопіюємо pre-commit в папку .git/hooks нашого поточного проекту
 ```sh
-    curl -o install_gitleaks.sh https://raw.githubusercontent.com/vshpelyk/pre-commit-hook/main/install_gitleaks.sh && chmod +x install_gitleaks.sh && ./install_gitleaks.sh
+curl -o install_gitleaks.sh https://raw.githubusercontent.com/vshpelyk/pre-commit-hook/main/install_gitleaks.sh && chmod +x install_gitleaks.sh && ./install_gitleaks.sh
 
-    talik@fedora kbot]$ curl -o install_gitleaks.sh https://raw.githubusercontent.com/vshpelyk/pre-commit-hook/main/install_gitleaks.sh && chmod +x install_gitleaks.sh && ./install_gitleaks.sh
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+talik@fedora kbot]$ curl -o install_gitleaks.sh https://raw.githubusercontent.com/vshpelyk/pre-commit-hook/main/install_gitleaks.sh && chmod +x install_gitleaks.sh && ./install_gitleaks.sh
+% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100  1405  100  1405    0     0   5037      0 --:--:-- --:--:-- --:--:--  5035
 Встановлення gitleaks...
@@ -72,12 +72,11 @@ gitleaks успішно встановлено.
                                  Dload  Upload   Total   Spent    Left  Speed
 100  1288  100  1288    0     0   4966      0 --:--:-- --:--:-- --:--:--  4972
 pre-commit hook успішно скопійовано і налаштовано.
-
 ```
-2. Щоб увімкнути перевірку gitleaks, виконайте команду:
+3. Щоб увімкнути перевірку gitleaks, виконайте команду:
     git config hooks.gitleaks.enable true
-
-    [vitalik@fedora kbot]$ git commit -m "Test password in project"
+```sh
+[vitalik@fedora kbot]$ git commit -m "Test password in project"
 Запуск gitleaks...
 
     ○
@@ -89,6 +88,5 @@ pre-commit hook успішно скопійовано і налаштовано.
 4:36PM INF scan completed in 2.86ms
 4:36PM WRN leaks found: 1
 gitleaks виявив секрети у вашому коді. Коміт відхилено.
-
-```SH
-3. 
+```
+ 
