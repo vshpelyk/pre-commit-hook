@@ -1,24 +1,14 @@
 #!/bin/bash
 
-# Встановлення gitleaks, якщо не встановлено
-if ! command -v gitleaks &> /dev/null
+# Встановлення gitleaks і pre-commit hook, якщо не встановлено
+if ! command -v gitleaks &> /dev/null || [[ ! -f .git/hooks/pre-commit ]]
 then
-    echo "gitleaks не знайдено. Встановлення..."
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest | grep "browser_download_url.*linux_amd64.tar.gz" | cut -d : -f 2,3 | tr -d \" | wget -qi -
-        tar -xzf gitleaks*.tar.gz
-        sudo mv gitleaks /usr/local/bin/
-        rm gitleaks*.tar.gz
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest | grep "browser_download_url.*darwin_amd64.tar.gz" | cut -d : -f 2,3 | tr -d \" | wget -qi -
-        tar -xzf gitleaks*.tar.gz
-        sudo mv gitleaks /usr/local/bin/
-        rm gitleaks*.tar.gz
-    else
-        echo "Непідтримувана операційна система."
+    echo "Встановлення необхідних компонентів..."
+    ./install_gitleaks.sh
+    if [[ $? -ne 0 ]]; then
+        echo "Помилка встановлення необхідних компонентів."
         exit 1
     fi
-    echo "gitleaks успішно встановлено."
 fi
 
 # Перевірка чи ввімкнено pre-commit hook
@@ -27,9 +17,9 @@ if [[ "$(git config hooks.gitleaks.enable)" != "true" ]]; then
     exit 0
 fi
 
-# Запуск gitleaks
+# Запуск gitleaks з виведенням детальної інформації та перевіркою staged файлів
 echo "Запуск gitleaks..."
-gitleaks detect --source .
+git diff --cached --name-only | xargs gitleaks detect --no-git --source
 
 # Перевірка результату виконання gitleaks
 if [[ $? -ne 0 ]]; then
